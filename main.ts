@@ -1,4 +1,5 @@
-import { App, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import {App, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting} from 'obsidian';
+import {start} from "repl";
 
 interface MyPluginSettings {
 	mySetting: string;
@@ -16,15 +17,15 @@ export default class MyPlugin extends Plugin {
 
 		await this.loadSettings();
 
-		this.addRibbonIcon('dice', 'Sample Plugin', () => {
-			new Notice('This is a notice!');
-		});
+		// this.addRibbonIcon('dice', 'Sample Plugin', () => {
+		// 	new Notice('This is a notice!');
+		// });
 
-		this.addStatusBarItem().setText('Status Bar Text');
+		// this.addStatusBarItem().setText('Status Bar Text');
 
 		this.addCommand({
-			id: 'open-sample-modal',
-			name: 'Open Sample Modal',
+			id: 'select-random-line',
+			name: 'Select random line in current file',
 			// callback: () => {
 			// 	console.log('Simple Callback');
 			// },
@@ -32,7 +33,14 @@ export default class MyPlugin extends Plugin {
 				let leaf = this.app.workspace.activeLeaf;
 				if (leaf) {
 					if (!checking) {
-						new SampleModal(this.app).open();
+						let view = this.app.workspace.getActiveViewOfType(MarkdownView);
+						if (!view)
+							return;
+						let editor = view.editor;
+						let lines = editor.getValue().split('\n')
+						let random = Math.floor(Math.random()*lines.length-1)
+						editor.setCursor(random);
+
 					}
 					return true;
 				}
@@ -42,15 +50,15 @@ export default class MyPlugin extends Plugin {
 
 		this.addSettingTab(new SampleSettingTab(this.app, this));
 
-		this.registerCodeMirror((cm: CodeMirror.Editor) => {
-			console.log('codemirror', cm);
-		});
-
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			console.log('click', evt);
-		});
-
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
+		// this.registerCodeMirror((cm: CodeMirror.Editor) => {
+		// 	console.log('codemirror', cm);
+		// });
+		//
+		// this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
+		// 	console.log('click', evt);
+		// });
+		//
+		// this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
 	}
 
 	onunload() {
@@ -67,13 +75,17 @@ export default class MyPlugin extends Plugin {
 }
 
 class SampleModal extends Modal {
-	constructor(app: App) {
+	private readonly start: number;
+	private readonly end: number;
+	constructor(app: App, startValue:number, endValue:number) {
 		super(app);
+		this.start = startValue;
+		this.end = endValue;
 	}
 
 	onOpen() {
 		let {contentEl} = this;
-		contentEl.setText('Woah!');
+		contentEl.setText('Woah!' + this.start + " end:" + this.end);
 	}
 
 	onClose() {
